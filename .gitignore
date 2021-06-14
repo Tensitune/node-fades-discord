@@ -1,0 +1,13 @@
+.vscode
+yarn-error.log
+
+# Generated
+node_modules
+dist
+
+# Our stuff
+*.json
+!*.example.json
+
+!package.json
+!tsconfig.json

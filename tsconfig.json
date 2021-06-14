@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"baseUrl": "./",
+		"paths": {
+			"@/*": ["./*"]
+		},
+		"target": "es2020",
+		"lib": ["es2020.string"],
+		"module": "commonjs",
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "node",
+		"outDir": "./dist"
+	}
+}

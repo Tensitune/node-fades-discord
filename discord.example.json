@@ -1,0 +1,41 @@
+{
+	"token": "",
+  "applicationId": "",
+  "publicKey": "",
+	"guildId": "",
+  "members": {
+    "enabled": true,
+    "channelId": ""
+  },
+	"logs": {
+		"enabled": true,
+		"channelId": ""
+	},
+  "commits": {
+    "sbox": {
+      "enabled": true,
+      "webhook": {
+        "id": "",
+        "token": ""
+      }
+    }
+  },
+  "modules": {
+    "newsRoles": {
+      "titleEmoji": "",
+      "messageId": "",
+      "roles": [
+        {
+          "emoji": "📰",
+          "role": "general-news",
+          "text": "📰 - Получить роль для уведомлений на обычные новости."
+        },
+        {
+          "emoji": "123456789012345678",
+          "role": "sbox-news",
+          "text": "<:emoji:123456789012345678> - Получить роль для уведомлений на новости, связанных с S&box."
+        }
+      ]
+    }
+  }
+}
