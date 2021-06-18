@@ -1,18 +1,21 @@
-import fetch from "node-fetch";
+import { GatewayServer, SlashCommand, SlashCreator } from "slash-create";
+import { SlashNewsRoleCommand } from "./commands/NewsRoleCommand";
+
+import { join } from "path";
 import fs from "fs";
-import path from "path";
 
 import Discord from "discord.js";
 import getCurrentDateTime from "@/app/util/getCurrentDateTime";
 
-import { GatewayServer, SlashCommand, SlashCreator } from "slash-create";
+import fetch from "node-fetch";
 
-export default class DiscordBot extends Discord.Client {
-  config = require(path.join(process.cwd(), "discord.json"));
+export default class DiscordBot {
+  config = require(join(process.cwd(), "discord.json"));
+  discord: Discord.Client = new Discord.Client({
+    fetchAllMembers: false,
+  });
 
   constructor() {
-    super();
-
     const creator = new SlashCreator({
       applicationID: this.config.applicationId,
       publicKey: this.config.publicKey,
@@ -20,16 +23,44 @@ export default class DiscordBot extends Discord.Client {
     });
 
     creator.withServer(
-      new GatewayServer(handler => this.ws.on("INTERACTION_CREATE" as Discord.WSEventType, handler))
+      new GatewayServer(handler =>
+        this.discord.ws.on("INTERACTION_CREATE" as Discord.WSEventType, handler)
+      )
     );
 
-    const cmds: Array<SlashCommand> = [];
+    const cmds: Array<SlashCommand> = [new SlashNewsRoleCommand(this, creator)];
     for (const slashCmd of cmds) {
       creator.registerCommand(slashCmd);
     }
 
-    this.on("ready", async () => {
-      console.log(`Бот запущен как ${this.user.tag}`);
+    creator.on("componentInteraction", async ctx => {
+      for (const button of this.config.newsRoles) {
+        const customId = `${button.roleId}_${button.title.replace(/\s+/g, "_")}`;
+        if (ctx.customID === customId) {
+          const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
+          if (!guild) break;
+
+          const user = await guild.members.resolve(ctx.user.id)?.fetch();
+          if (!user) break;
+
+          const role = guild.roles.resolve(button.roleId);
+          if (!role) break;
+
+          if (!ctx.member.roles.includes(button.roleId)) {
+            await user.roles.add(button.roleId);
+            await user.send(`:white_check_mark: Вы получили роль ${role.name}`);
+          } else {
+            await user.roles.remove(button.roleId);
+            await user.send(`:x: Вы сняли с себя роль ${role.name}`);
+          }
+
+          break;
+        }
+      }
+    });
+
+    this.discord.on("ready", async () => {
+      console.log(`Бот запущен как ${this.discord.user.tag}`);
       await this.setStatus("fades.pw", "WATCHING");
 
       creator.syncCommands();
@@ -53,7 +84,7 @@ export default class DiscordBot extends Discord.Client {
         );
 
         setInterval(() => {
-          const commitsPath = path.join(process.cwd(), "commits.json");
+          const commitsPath = join(process.cwd(), "commits.json");
 
           let commits = { sbox: [] };
           if (fs.existsSync(commitsPath)) {
@@ -106,11 +137,11 @@ export default class DiscordBot extends Discord.Client {
       }
     });
 
-    this.login(this.config.token);
+    this.discord.login(this.config.token);
   }
 
   private async getGuildTextChannel(channelId: string): Promise<Discord.TextChannel> {
-    const guild = await this.guilds.resolve(this.config.guildId)?.fetch();
+    const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
     if (!guild) return;
 
     const channel = (await guild.channels.resolve(channelId)?.fetch()) as Discord.TextChannel;
@@ -123,7 +154,7 @@ export default class DiscordBot extends Discord.Client {
   ): Promise<void> {
     if (status.length > 127) status = status.substring(0, 120) + "...";
 
-    await this.user.setPresence({
+    await this.discord.user.setPresence({
       activity: {
         name: status.trim().substring(0, 100),
         type,
