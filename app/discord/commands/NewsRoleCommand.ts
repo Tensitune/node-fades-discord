@@ -6,7 +6,7 @@ import {
   SlashCommand,
   SlashCreator,
 } from "slash-create";
-import DiscordBot from "..";
+import { DiscordBot } from "..";
 
 export class SlashNewsRoleCommand extends SlashCommand {
   private bot: DiscordBot;

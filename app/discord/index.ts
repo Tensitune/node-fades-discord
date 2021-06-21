@@ -1,21 +1,24 @@
+import { Container } from "@/app/Container";
 import { GatewayServer, SlashCommand, SlashCreator } from "slash-create";
+import { Service } from "../services";
 import { SlashNewsRoleCommand } from "./commands/NewsRoleCommand";
 
 import { join } from "path";
 import fs from "fs";
 
 import Discord from "discord.js";
-import getCurrentDateTime from "@/app/util/getCurrentDateTime";
-
 import fetch from "node-fetch";
 
-export default class DiscordBot {
+export class DiscordBot extends Service {
+  name = "DiscordBot";
   config = require(join(process.cwd(), "discord.json"));
   discord: Discord.Client = new Discord.Client({
     fetchAllMembers: false,
   });
 
-  constructor() {
+  constructor(container: Container) {
+    super(container);
+
     const creator = new SlashCreator({
       applicationID: this.config.applicationId,
       publicKey: this.config.publicKey,
@@ -70,7 +73,7 @@ export default class DiscordBot {
         if (logsChannel) {
           const embed = new Discord.MessageEmbed()
             .setTitle(`⚙️ Бот успешно запущен`)
-            .setFooter(getCurrentDateTime())
+            .setFooter(this.container.getCurrentDateTime())
             .setColor("#7447D1");
 
           await logsChannel.send(embed);
@@ -163,3 +166,7 @@ export default class DiscordBot {
     });
   }
 }
+
+export default (container: Container): Service => {
+  return new DiscordBot(container);
+};

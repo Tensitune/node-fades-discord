@@ -1,2 +1,2 @@
-import DiscordBot from "./app/discord";
-export default new DiscordBot();
+import App from "./app";
+export default new App();
