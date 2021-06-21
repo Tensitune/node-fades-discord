@@ -4,10 +4,7 @@
   "publicKey": "",
 	"guildId": "",
   "devRoleId": "",
-  "members": {
-    "enabled": true,
-    "channelId": ""
-  },
+  "membersChannelId": "",
 	"logs": {
 		"enabled": true,
 		"channelId": ""

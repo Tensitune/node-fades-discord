@@ -140,6 +140,60 @@ export class DiscordBot extends Service {
       }
     });
 
+    this.discord.on("guildMemberAdd", async member => {
+      const membersChannel = await this.getGuildVoiceChannel(this.config.membersChannelId);
+      if (membersChannel) membersChannel.setName(`Участники: ${member.guild.memberCount}`);
+
+      if (this.config.logs.enabled) {
+        const logsChannel = await this.getGuildTextChannel(this.config.logs.channelId);
+        if (logsChannel) {
+          const createdAt = new Date(member.user.createdTimestamp).toLocaleString("ru", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+          });
+
+          let description = `Присоединился к **${member.guild.name}**\n`;
+          description += `Теперь на сервере **${member.guild.memberCount}** участников.\n\n`;
+          description += `Дата регистрации **${createdAt}**`;
+
+          const embed = new Discord.MessageEmbed()
+            .setTitle(member.user.tag)
+            .setDescription(description)
+            .setThumbnail(member.user.displayAvatarURL())
+            .setFooter(this.container.getCurrentDateTime())
+            .setColor("#7AEB7A");
+
+          await logsChannel.send(embed);
+        }
+      }
+    });
+
+    this.discord.on("guildMemberRemove", async member => {
+      const membersChannel = await this.getGuildVoiceChannel(this.config.membersChannelId);
+      if (membersChannel) membersChannel.setName(`Участники: ${member.guild.memberCount}`);
+
+      if (this.config.logs.enabled) {
+        const logsChannel = await this.getGuildTextChannel(this.config.logs.channelId);
+        if (logsChannel) {
+          let description = `Покинул **${member.guild.name}**\n`;
+          description += `Теперь на сервере **${member.guild.memberCount}** участников.`;
+
+          const embed = new Discord.MessageEmbed()
+            .setTitle(member.user.tag)
+            .setDescription(description)
+            .setThumbnail(member.user.displayAvatarURL())
+            .setFooter(this.container.getCurrentDateTime())
+            .setColor("#FFE148");
+
+          await logsChannel.send(embed);
+        }
+      }
+    });
+
     this.discord.login(this.config.token);
   }
 
@@ -148,6 +202,14 @@ export class DiscordBot extends Service {
     if (!guild) return;
 
     const channel = (await guild.channels.resolve(channelId)?.fetch()) as Discord.TextChannel;
+    return channel;
+  }
+
+  private async getGuildVoiceChannel(channelId: string): Promise<Discord.VoiceChannel> {
+    const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
+    if (!guild) return;
+
+    const channel = (await guild.channels.resolve(channelId)?.fetch()) as Discord.VoiceChannel;
     return channel;
   }
 
