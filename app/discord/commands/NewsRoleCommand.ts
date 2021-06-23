@@ -18,6 +18,7 @@ export class SlashNewsRoleCommand extends SlashCommand {
       description: "Команда, вызывающая табличку с выдачей ролей на оповещения с новостями.",
       deferEphemeral: true,
       guildIDs: [bot.config.guildId],
+      defaultPermission: false,
       permissions: {
         [bot.config.guildId]: [
           {
