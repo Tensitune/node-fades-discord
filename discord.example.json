@@ -18,16 +18,19 @@
       }
     }
   },
-  "newsRoles": [
-    {
-      "title": "General",
-      "emoji": "📰",
-      "roleId": ""
-    },
-    {
-      "title": "S&box",
-      "emoji": "123456789012345678",
-      "roleId": ""
-    }
-  ]
+  "newsRole": {
+		"messageId": "",
+		"roles": [
+			{
+        "id": "",
+        "title": "General",
+        "emoji": "📰"
+      },
+      {
+        "id": "",
+        "title": "S&box",
+        "emoji": "123456789012345678"
+      }
+		]
+	}
 }

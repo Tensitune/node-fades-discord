@@ -1,6 +1,7 @@
 import { Container } from "@/app/Container";
 import { GatewayServer, SlashCommand, SlashCreator } from "slash-create";
 import { Service } from "../services";
+
 import { SlashNewsRoleCommand } from "./commands/NewsRoleCommand";
 
 import { join } from "path";
@@ -13,6 +14,7 @@ export class DiscordBot extends Service {
   name = "DiscordBot";
   config = require(join(process.cwd(), "discord.json"));
   discord: Discord.Client = new Discord.Client({
+    partials: ["MESSAGE", "CHANNEL", "REACTION"],
     fetchAllMembers: false,
   });
 
@@ -35,32 +37,6 @@ export class DiscordBot extends Service {
     for (const slashCmd of cmds) {
       creator.registerCommand(slashCmd);
     }
-
-    creator.on("componentInteraction", async ctx => {
-      for (const button of this.config.newsRoles) {
-        const customId = `${button.roleId}_${button.title.replace(/\s+/g, "_")}`;
-        if (ctx.customID === customId) {
-          const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
-          if (!guild) break;
-
-          const user = await guild.members.resolve(ctx.user.id)?.fetch();
-          if (!user) break;
-
-          const role = guild.roles.resolve(button.roleId);
-          if (!role) break;
-
-          if (!ctx.member.roles.includes(button.roleId)) {
-            await user.roles.add(button.roleId);
-            await user.send(`:white_check_mark: Вы получили роль ${role.name}`);
-          } else {
-            await user.roles.remove(button.roleId);
-            await user.send(`:x: Вы сняли с себя роль ${role.name}`);
-          }
-
-          break;
-        }
-      }
-    });
 
     this.discord.on("ready", async () => {
       console.log(`Бот запущен как ${this.discord.user.tag}`);
@@ -142,7 +118,7 @@ export class DiscordBot extends Service {
 
     this.discord.on("guildMemberAdd", async member => {
       const membersChannel = await this.getGuildVoiceChannel(this.config.membersChannelId);
-      if (membersChannel) membersChannel.setName(`Участники: ${member.guild.memberCount}`);
+      if (membersChannel) await membersChannel.setName(`Участники: ${member.guild.memberCount}`);
 
       if (this.config.logs.enabled) {
         const logsChannel = await this.getGuildTextChannel(this.config.logs.channelId);
@@ -174,7 +150,7 @@ export class DiscordBot extends Service {
 
     this.discord.on("guildMemberRemove", async member => {
       const membersChannel = await this.getGuildVoiceChannel(this.config.membersChannelId);
-      if (membersChannel) membersChannel.setName(`Участники: ${member.guild.memberCount}`);
+      if (membersChannel) await membersChannel.setName(`Участники: ${member.guild.memberCount}`);
 
       if (this.config.logs.enabled) {
         const logsChannel = await this.getGuildTextChannel(this.config.logs.channelId);
@@ -194,10 +170,72 @@ export class DiscordBot extends Service {
       }
     });
 
+    this.discord.on("messageReactionAdd", async (reaction, reactionUser) => {
+      if (reactionUser.bot) return;
+      if (reaction.partial) {
+        try {
+          await reaction.fetch();
+        } catch (err) {
+          console.error(err);
+          return;
+        }
+      }
+
+      if (this.config.newsRole.messageId !== reaction.message.id) return;
+
+      for (const role of this.config.newsRole.roles) {
+        if (reaction.emoji.id === role.emoji || reaction.emoji.name === role.emoji) {
+          const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
+          if (!guild) break;
+
+          const guildRole = guild.roles.resolve(role.id);
+          if (!guildRole) continue;
+
+          const user = await guild.members.resolve(reactionUser.id).fetch();
+
+          await user.roles.add(guildRole.id);
+          await user.send(`:white_check_mark: Вы получили роль ${guildRole.name} (${role.title})`);
+
+          break;
+        }
+      }
+    });
+
+    this.discord.on("messageReactionRemove", async (reaction, reactionUser) => {
+      if (reactionUser.bot) return;
+      if (reaction.partial) {
+        try {
+          await reaction.fetch();
+        } catch (err) {
+          console.error(err);
+          return;
+        }
+      }
+
+      if (this.config.newsRole.messageId !== reaction.message.id) return;
+
+      for (const role of this.config.newsRole.roles) {
+        if (reaction.emoji.id === role.emoji || reaction.emoji.name === role.emoji) {
+          const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
+          if (!guild) break;
+
+          const guildRole = guild.roles.resolve(role.id);
+          if (!guildRole) continue;
+
+          const user = await guild.members.resolve(reactionUser.id).fetch();
+
+          await user.roles.remove(guildRole.id);
+          await user.send(`:x: Вы сняли с себя роль ${guildRole.name} (${role.title})`);
+
+          break;
+        }
+      }
+    });
+
     this.discord.login(this.config.token);
   }
 
-  private async getGuildTextChannel(channelId: string): Promise<Discord.TextChannel> {
+  public async getGuildTextChannel(channelId: string): Promise<Discord.TextChannel> {
     const guild = await this.discord.guilds.resolve(this.config.guildId)?.fetch();
     if (!guild) return;
 
