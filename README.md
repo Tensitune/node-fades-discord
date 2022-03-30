@@ -8,12 +8,18 @@
 ### Настройка сборки
 ```bash
 # установка зависимостей
-$ yarn
+yarn
 
 # запуск с горячей перезагрузкой
-$ yarn dev
+yarn dev
 
 # сборка для производства и запуск бота
-$ yarn build
-$ yarn start
+yarn build
+yarn start
+```
+
+Там есть файл с именем `ecosystem.config.js`, который специально разработан для процесса [PM2](https://pm2.keymetrics.io/).
+**Перед запуском не забудьте запустить `yarn build` для сборки.**
+```bash
+pm2 startOrReload ecosystem.config.js
 ```
