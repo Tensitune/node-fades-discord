@@ -3,12 +3,10 @@
   "version": "0.0.1",
   "description": "Fades Discord Bot but it's written in typescript",
   "main": "index.ts",
-  "repository": "github:danon4ik/node-fades-discord",
-  "author": "Danon <fadescode@gmail.com>",
+  "author": "Tensitune <fadescode@gmail.com>",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "cross-env NODE_ENV=production node dist",
     "dev": "cross-env NODE_ENV=development ts-node-dev -r tsconfig-paths/register index.ts",
     "build": "rm -rf ./dist && tsc && tscpaths -p tsconfig.json -s ./ -o ./dist"
